@@ -47,7 +47,6 @@ public class AuthenticationService {
         user.setEmail(request.getEmail());
 //////////////////////////AASSIGN ROLEES////////////////////
 
-
         RoleName roleName;
         try {
             roleName = request.getRoleName();
@@ -55,7 +54,6 @@ public class AuthenticationService {
             throw new RuntimeException("Invalid role name");
         }
 
-        // Fetch the role from the database or create it if it doesn't exist
         Role role = roleRepository.findByName(roleName)
                 .orElseGet(() -> {
                     Role newRole = new Role();
@@ -63,11 +61,7 @@ public class AuthenticationService {
                     return roleRepository.save(newRole);
                 });
 
-        // Assign the role to the user
         user.setRoles(Collections.singletonList(role));
-
-
-
 
         repository.save(user);
 
@@ -92,10 +86,7 @@ public class AuthenticationService {
                 .token(jwtToken)
                 .build();
 
-
-
     }
-
 
 
     private boolean isValidEmail(String email) {
