@@ -1,5 +1,6 @@
 package com.ulysseprod.Authentication;
 
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,11 +14,10 @@ public class AuthenticationController {
 
     @Autowired
     private AuthenticationService service;
+
     @PostMapping("/SignUp")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request)
-    {
-        service.register(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) throws MessagingException {
+        return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/SignIn")

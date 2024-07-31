@@ -1,4 +1,4 @@
-package com.ulysseprod.Entity;
+package com.ulysseprod.Entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "User")
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,22 +24,27 @@ public class User implements UserDetails {
     private String username;
     private String password;
     private String email;
+    private boolean accountLocked;
+    private boolean enabled;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @ToString.Exclude
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private List<Role> roles = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+
+    private List<Role> roles ;
+
 
 
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.getRoles().stream().map(role ->
-                new SimpleGrantedAuthority(role.getName().name())
-        ).collect(Collectors.toList());
+        if (roles == null) {
+            return Collections.emptyList();
+        }
+        return this.roles
+                .stream()
+                .map(r -> new SimpleGrantedAuthority(r.getName()))
+                .collect(Collectors.toList());
     }
+
 
     @Override
     public String getPassword() {

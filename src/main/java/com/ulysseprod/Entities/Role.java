@@ -1,12 +1,13 @@
-package com.ulysseprod.Entity;
+package com.ulysseprod.Entities;
 
-import com.ulysseprod.DTO.RoleName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.NaturalId;
+
+import java.util.List;
 
 @Data
 @Entity
@@ -17,14 +18,17 @@ import org.hibernate.annotations.NaturalId;
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
-
     private Integer id;
 
-    @Enumerated(EnumType.STRING)
 
-    @Column(length = 60)
-    private RoleName name;
+    private String name;
+
+
+    @ManyToMany(mappedBy = "roles")
+    @JsonIgnore
+    private List<User> user;
+
+
 
 
 }

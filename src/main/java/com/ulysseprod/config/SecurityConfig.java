@@ -1,6 +1,5 @@
 package com.ulysseprod.config;
 
-import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,14 +25,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(registry -> {
-                    registry.requestMatchers("/api/auth/**").permitAll()
-                                    .anyRequest().authenticated();
-                })
+                .authorizeHttpRequests(registry ->
+                        registry.requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin").hasRole("ADMIN")
+                                .anyRequest().authenticated())
 
-               // .authenticationProvider(authenticationProvider)
+                .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
 

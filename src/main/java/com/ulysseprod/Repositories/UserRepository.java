@@ -1,6 +1,6 @@
 package com.ulysseprod.Repositories;
 
-import com.ulysseprod.Entity.User;
+import com.ulysseprod.Entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

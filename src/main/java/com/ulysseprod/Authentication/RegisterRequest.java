@@ -1,13 +1,14 @@
 package com.ulysseprod.Authentication;
 
-import com.ulysseprod.DTO.RoleName;
-import com.ulysseprod.Entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Data
 @Builder
@@ -15,9 +16,16 @@ import java.util.Set;
 @NoArgsConstructor
 public class RegisterRequest {
 
+    @NotEmpty(message = "Email is mandatory")
+    @NotNull(message = "Email is mandatory")
     private String email;
+    @NotEmpty(message = "Username is mandatory")
+    @NotNull(message = "Username is mandatory")
     private String username;
+    @NotEmpty(message = "Password is mandatory")
+    @NotNull(message = "Password is mandatory")
+    @Size(min = 8, message = "Password should be 8 characters long minimum")
     private String password;
-    private RoleName roleName;
+    private String roleName;
 
 }
