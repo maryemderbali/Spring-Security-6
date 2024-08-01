@@ -19,9 +19,17 @@ public class Token {
 
     @Column(unique = true)
     private String token;
+
+
+
+
     private LocalDateTime createdAt;
-    private LocalDateTime expiresAt;
-    private LocalDateTime validatedAt;
+    public LocalDateTime expiresAt;
+    public boolean revoked;
+    public boolean expired;
+    @Enumerated(EnumType.STRING)
+    public TokenType tokenType = TokenType.BEARER;
+
 
     @ManyToOne
     @JoinColumn(name = "userId", nullable = false)

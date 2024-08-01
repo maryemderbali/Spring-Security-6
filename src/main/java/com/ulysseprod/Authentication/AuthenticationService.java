@@ -1,9 +1,10 @@
 package com.ulysseprod.Authentication;
 
-import com.ulysseprod.Email.EmailService;
-import com.ulysseprod.Email.EmailTemplateName;
+//import com.ulysseprod.Email.EmailService;
+//import com.ulysseprod.Email.EmailTemplateName;
 import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Entities.Token;
+import com.ulysseprod.Entities.TokenType;
 import com.ulysseprod.Entities.User;
 import com.ulysseprod.Repositories.RoleRepository;
 import com.ulysseprod.Repositories.TokenRepository;
@@ -16,7 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +36,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final EmailService emailService;
+//    private final EmailService emailService;
 
     public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
 
@@ -54,18 +55,6 @@ public class AuthenticationService {
                     return roleRepository.save(newRole);
                 });
 
-        if (!isValidEmail(request.getEmail())) {
-            throw new RuntimeException("Invalid email format");
-        }
-
-        if (repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-
-        if (repository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists");
-        }
-
         var user = User.builder()
                 .email(request.getEmail())
                 .username(request.getUsername())
@@ -77,26 +66,56 @@ public class AuthenticationService {
 
 
         repository.save(user);
-
-       var jwtToken =jwtService.generateToken(user);
+        var jwtToken =jwtService.generateToken(user);
+        saveUserToken(user, jwtToken);
         sendValidationEmail(user);
 
 
-        return AuthenticationResponse.builder().token(jwtToken).build();
+        return AuthenticationResponse.builder().token(jwtToken).tokenType(TokenType.BEARER).build();
     }
 
     private void sendValidationEmail(User user) throws MessagingException {
         var newToken = generateAndSaveActivationToken(user);
 
-        emailService.sendEmail(
-                user.getEmail(),
-                user.getUsername(),
-                EmailTemplateName.ACTIVATE_ACCOUNT,
-                "http://localhost:4200/activate-account",
-                newToken,
-                "Account activation"
-        );
+//        emailService.sendEmail(
+//                user.getEmail(),
+//                user.getUsername(),
+//                EmailTemplateName.ACTIVATE_ACCOUNT,
+//                "http://localhost:4200/activate-account",
+//                newToken,
+//                "Account activation"
+//        );
     }
+
+
+    @Transactional
+    public void activateAccount(String token) throws MessagingException {
+        Token savedToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+        if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
+            sendValidationEmail(savedToken.getUser());
+            throw new RuntimeException("Activation token has expired. A new token has been send to the same email address");
+        }
+
+        var user = repository.findById(savedToken.getUser().getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setEnabled(true);
+        repository.save(user);
+
+        tokenRepository.delete(savedToken);
+    }
+
+    private void revokeAllUserTokens(User user){
+        List<Token> validTokens = tokenRepository.findAllValidTokensByUser(user.getId());
+        if (validTokens.isEmpty()) {
+            return;
+        }
+        validTokens.forEach(token -> {
+            token.setExpiresAt(LocalDateTime.now());
+            token.setRevoked(true);        });
+        tokenRepository.saveAll(validTokens);
+    }
+
 
     private String generateAndSaveActivationToken(User user) {
             String generatedToken= generateActivationCode(6);
@@ -104,11 +123,11 @@ public class AuthenticationService {
                 .token(generatedToken)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusMinutes(15))
+                .revoked(false)
+               .tokenType(TokenType.ACTIVATION)
                 .user(user)
                 .build();
-
-        tokenRepository.save(token);
-
+            tokenRepository.save(token);
         return generatedToken;
     }
 
@@ -132,13 +151,14 @@ public class AuthenticationService {
                         request.getPassword())
         );
         var user = repository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + request.getUsername()));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: "
+                        + request.getUsername()));
 
         var jwtToken =jwtService.generateToken(user);
-
         return AuthenticationResponse
                 .builder()
                 .token(jwtToken)
+                .tokenType(TokenType.BEARER)
                 .build();
 
     }
@@ -149,6 +169,21 @@ public class AuthenticationService {
         Pattern pattern = Pattern.compile(emailRegex);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
+    }
+
+
+    private void saveUserToken(User user, String jwtToken) {
+        var token = Token.builder()
+                .token(jwtToken)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusSeconds(+1000 * 60 * 24))
+                .revoked(false)
+                .expired(false)
+                .tokenType(TokenType.BEARER)
+                .user(user)
+                .build();
+
+        tokenRepository.save(token);
     }
 
 }

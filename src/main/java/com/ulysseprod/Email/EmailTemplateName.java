@@ -8,7 +8,6 @@ public enum EmailTemplateName {
 
 
     private final String name;
-
     EmailTemplateName(String name) {
         this.name = name;
     }

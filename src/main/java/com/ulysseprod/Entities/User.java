@@ -31,7 +31,8 @@ public class User implements UserDetails {
 
     private List<Role> roles ;
 
-
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
 
     @Override

@@ -1,5 +1,8 @@
 package com.ulysseprod.config;
 
+import com.ulysseprod.Entities.Token;
+import com.ulysseprod.Entities.TokenType;
+import com.ulysseprod.Repositories.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +19,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static org.hibernate.grammars.hql.HqlParser.CURRENT_TIMESTAMP;
+
 @Component
 @RequiredArgsConstructor
 
@@ -23,6 +28,7 @@ public class JwtAuthentificationFilter extends OncePerRequestFilter {
 
     private final JwtService JwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenRepository tokenRepository;
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -40,11 +46,15 @@ public class JwtAuthentificationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        username = JwtService.extractusername(jwt) ; //// Username from JWToken
+        username = JwtService.extractusername(jwt) ;
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null)
         {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            if (JwtService.isTokenValid(jwt,userDetails)){
+            var isTokenValid = tokenRepository.findByToken(jwt)
+                    .map(t -> !t.isRevoked() && t.getTokenType() == TokenType.BEARER)
+                    .orElse(false);
+
+            if (JwtService.isTokenValid(jwt,userDetails) && isTokenValid){
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken
                                 (userDetails,
