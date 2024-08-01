@@ -2,6 +2,7 @@ package com.ulysseprod.Authentication;
 
 //import com.ulysseprod.Email.EmailService;
 //import com.ulysseprod.Email.EmailTemplateName;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Entities.Token;
 import com.ulysseprod.Entities.TokenType;
@@ -11,13 +12,20 @@ import com.ulysseprod.Repositories.TokenRepository;
 import com.ulysseprod.Repositories.UserRepository;
 import com.ulysseprod.config.JwtService;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,6 +62,17 @@ public class AuthenticationService {
                     newRole.setName(roleName);
                     return roleRepository.save(newRole);
                 });
+        if (!isValidEmail(request.getEmail())) {
+            throw new RuntimeException("Invalid email format");
+        }
+
+        if (repository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        if (repository.findByUsername(request.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
 
         var user = User.builder()
                 .email(request.getEmail())
@@ -66,12 +85,17 @@ public class AuthenticationService {
 
 
         repository.save(user);
-        var jwtToken =jwtService.generateToken(user);
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
         saveUserToken(user, jwtToken);
         sendValidationEmail(user);
 
 
-        return AuthenticationResponse.builder().token(jwtToken).tokenType(TokenType.BEARER).build();
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     private void sendValidationEmail(User user) throws MessagingException {
@@ -105,29 +129,30 @@ public class AuthenticationService {
         tokenRepository.delete(savedToken);
     }
 
-    private void revokeAllUserTokens(User user){
+    private void revokeAllUserTokens(User user) {
         List<Token> validTokens = tokenRepository.findAllValidTokensByUser(user.getId());
         if (validTokens.isEmpty()) {
             return;
         }
         validTokens.forEach(token -> {
             token.setExpiresAt(LocalDateTime.now());
-            token.setRevoked(true);        });
+            token.setRevoked(true);
+        });
         tokenRepository.saveAll(validTokens);
     }
 
 
     private String generateAndSaveActivationToken(User user) {
-            String generatedToken= generateActivationCode(6);
-            var token = Token.builder()
+        String generatedToken = generateActivationCode(6);
+        var token = Token.builder()
                 .token(generatedToken)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(LocalDateTime.now().plusMinutes(15))
                 .revoked(false)
-               .tokenType(TokenType.ACTIVATION)
+                .tokenType(TokenType.ACTIVATION)
                 .user(user)
                 .build();
-            tokenRepository.save(token);
+        tokenRepository.save(token);
         return generatedToken;
     }
 
@@ -135,8 +160,7 @@ public class AuthenticationService {
         String characters = "0123456789";
         StringBuilder codeBuilder = new StringBuilder();
         SecureRandom secureRandom = new SecureRandom();
-        for (int i= 0; i<length ; i++ )
-        {
+        for (int i = 0; i < length; i++) {
             int randomIndex = secureRandom.nextInt(characters.length());
             codeBuilder.append(characters.charAt(randomIndex));
         }
@@ -154,10 +178,12 @@ public class AuthenticationService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: "
                         + request.getUsername()));
 
-        var jwtToken =jwtService.generateToken(user);
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
         return AuthenticationResponse
                 .builder()
                 .token(jwtToken)
+                .refreshToken(refreshToken)
                 .tokenType(TokenType.BEARER)
                 .build();
 
@@ -176,7 +202,7 @@ public class AuthenticationService {
         var token = Token.builder()
                 .token(jwtToken)
                 .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusSeconds(+1000 * 60 * 24))
+                .expiresAt(LocalDateTime.now().plusSeconds(1000 * 60 * 24))
                 .revoked(false)
                 .expired(false)
                 .tokenType(TokenType.BEARER)
@@ -186,4 +212,31 @@ public class AuthenticationService {
         tokenRepository.save(token);
     }
 
+    public void refreshToken(HttpServletRequest request,
+                             HttpServletResponse response) throws IOException {
+        final String authHeader = request.getHeader("Authorization");
+        final String refreshToken;
+        final String username;
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+
+        refreshToken = authHeader.substring(7);
+        username = jwtService.extractusername(refreshToken);
+        if (username != null) {
+            var user = this.repository.findByUsername(username)
+                    .orElseThrow();
+            if (jwtService.isTokenValid(refreshToken, user)) {
+                var accessToken = jwtService.generateToken(user);
+                revokeAllUserTokens(user);
+                saveUserToken(user, accessToken);
+                var authResponse = AuthenticationResponse.builder()
+                        .token(accessToken)
+                        .refreshToken(refreshToken)
+                        .build();
+                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+            }
+        }
+    }
 }
