@@ -71,4 +71,20 @@ public class UserServiceImpl implements UserService{
             return "User with ID " + id + " not found.";
         }
     }
+
+    public String  unblockUser(Integer id) {
+        Optional<User> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            if (user.isBlocked()) {
+                user.setBlocked(false);
+                userRepository.save(user);
+                return "User with ID " + id + " has been unblocked successfully.";
+            } else {
+                return "User with ID " + id + " is already blocked.";
+            }
+        } else {
+            return "User with ID " + id + " not found.";
+        }
+    }
 }

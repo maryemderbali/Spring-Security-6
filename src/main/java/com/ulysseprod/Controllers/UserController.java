@@ -34,6 +34,8 @@ public class UserController {
         }
     }
 
+    @PreAuthorize("hasAuthority('EDIT_USER')")
+    @PutMapping("/update")
     public User updateUser(User user) {
         return userService.updateUser(user);
     }
@@ -53,5 +55,13 @@ public class UserController {
         }
         return ResponseEntity.ok(result);
     }
-    
+    @PreAuthorize("hasAnyAuthority('DELETE_USER','CREATE_USER','EDIT_USER')")
+    @PutMapping("/unblock/{id}")
+    public ResponseEntity<String> unblockUser(@PathVariable("id") Integer id) {
+        String result = userService.unblockUser(id);
+        if (result.contains("not found")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+        }
+        return ResponseEntity.ok(result);
+    }
 }
