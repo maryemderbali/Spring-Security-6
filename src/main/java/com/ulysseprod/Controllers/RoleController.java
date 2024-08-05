@@ -3,7 +3,6 @@ package com.ulysseprod.Controllers;
 import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Services.RoleServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +19,8 @@ public class RoleController {
     public void addRole(@PathVariable("RolesName") String roleName) {
         roleService.addRole(roleName);
     }
+
+
     @PreAuthorize("hasAuthority('DELETE_ROLE')")
     @DeleteMapping("/{name}")
     public void deleteRole(@PathVariable("name") String roleName) {
@@ -32,4 +33,20 @@ public class RoleController {
     }
 
 
+    @PreAuthorize("hasAnyAuthority('CREATE_PERMISSION','CREATE_ROLE')")
+    @PostMapping("/AssignPermission/{rolename}/{permission}")
+    public void assignPermissionToRole(@PathVariable("rolename") String roleName,
+                                       @PathVariable("permission")String permissionName)
+    {
+        roleService.assignPermissionToRole(roleName, permissionName);
+    }
+
+    @PreAuthorize("hasAnyAuthority('DELETE_PERMISSION','DELETE_ROLE','EDIT_ROLE')")
+    @DeleteMapping("/RemovePermission/{roleName}/{permissionName}")
+
+    public void removePermissionFromRole(@PathVariable("roleName") String roleName
+            , @PathVariable("permissionName") String permissionName)
+    {
+        roleService.removePermissionFromRole(roleName, permissionName);
+    }
 }

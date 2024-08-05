@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,12 @@ public class AuthenticationController {
     @PostMapping("/SignIn")
     public ResponseEntity<AuthenticationResponse> register(@RequestBody AuthenticationRequest request)
     {
-        return ResponseEntity.ok(service.authenticate(request));
+        try {
+            AuthenticationResponse response = service.authenticate(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
     }
 
     @PostMapping("/refresh-token")

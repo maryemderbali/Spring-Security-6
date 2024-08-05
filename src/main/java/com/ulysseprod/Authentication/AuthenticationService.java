@@ -75,7 +75,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .accountLocked(false)
+                .blocked(false)
                 .enabled(false)
                 .roles(List.of(role))
                 .build();
@@ -174,6 +174,10 @@ public class AuthenticationService {
         var user = repository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: "
                         + request.getUsername()));
+
+        if (!user.isEnabled() || user.isBlocked()) {
+            throw new RuntimeException("User account is either disabled or blocked.");
+        }
 
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);

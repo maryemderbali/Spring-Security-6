@@ -38,12 +38,9 @@ public class UlysseprodApplication {
         return this::configPermissions;
     }
 
-
     public  void checkOrCreatePermissions(String entity)
     {
-
         String[] actionsList = {"READ", "CREATE", "DELETE", "EDIT"};
-
         for(String action : actionsList){
             String permissionName  = action+"_"+entity.toUpperCase();
             Permission permission = permissionRepository.findPermissionByName(permissionName);
@@ -51,8 +48,8 @@ public class UlysseprodApplication {
                 permissionRepository.saveAndFlush(Permission.builder().name(permissionName).build());
             }
         }
-
     }
+
     public  void configPermissions(){
         List<String> entities = new ArrayList<>();
         entities.add("User");
@@ -63,7 +60,6 @@ public class UlysseprodApplication {
             checkOrCreatePermissions(entity);
         }
         createSuperUser();
-
     }
 
     public void createSuperUser(){
@@ -79,7 +75,7 @@ public class UlysseprodApplication {
                     .email("super@app.com")
                     .username("super")
                     .password(passwordEncoder.encode("12345678super"))
-                    .accountLocked(false)
+                    .blocked(false)
                     .enabled(true)
                     .roles(List.of(newRole))
                     .build();
@@ -87,6 +83,5 @@ public class UlysseprodApplication {
 
         }
     }
-
 
 }

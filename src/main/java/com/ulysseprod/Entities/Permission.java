@@ -19,7 +19,6 @@ public class Permission {
 
     private Integer id;
     private String name;
-
     @ManyToMany(mappedBy = "permissions")
     private List<Role> roles;
 
