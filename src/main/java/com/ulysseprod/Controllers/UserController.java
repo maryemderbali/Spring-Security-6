@@ -1,7 +1,6 @@
 package com.ulysseprod.Controllers;
 
 import com.ulysseprod.Entities.User;
-import com.ulysseprod.Services.UserService;
 import com.ulysseprod.Services.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -64,4 +63,7 @@ public class UserController {
         }
         return ResponseEntity.ok(result);
     }
+
+
+
 }
