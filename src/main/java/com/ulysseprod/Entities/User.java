@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 @Entity
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -28,7 +27,6 @@ public class User implements UserDetails {
     private boolean enabled;
 
     @ManyToMany(fetch = FetchType.EAGER)
-
     private List<Role> roles ;
 
     @OneToMany(mappedBy = "user")
@@ -40,9 +38,9 @@ public class User implements UserDetails {
         if (roles == null) {
             return Collections.emptyList();
         }
-        return this.roles
-                .stream()
-                .map(r -> new SimpleGrantedAuthority(r.getName()))
+        return roles.stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
                 .collect(Collectors.toList());
     }
 

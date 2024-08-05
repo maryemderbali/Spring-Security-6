@@ -20,8 +20,13 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void addUser(User user) {
+    public void createUser(User user) {
         
+    }
+
+    @Override
+    public User updateUser(User user) {
+        return null;
     }
 
     @Override

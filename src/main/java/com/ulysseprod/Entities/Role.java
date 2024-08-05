@@ -29,6 +29,8 @@ public class Role {
     private List<User> user;
 
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<Permission> permissions;
 
 
 }

@@ -4,6 +4,7 @@ import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Repositories.RoleRepository;
 import com.ulysseprod.Repositories.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

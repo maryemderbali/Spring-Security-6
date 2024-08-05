@@ -17,7 +17,8 @@ public class AuthenticationController {
     private AuthenticationService service;
 
     @PostMapping("/SignUp")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) throws MessagingException {
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request)
+            throws MessagingException {
         return ResponseEntity.ok(service.register(request));
     }
 
@@ -34,7 +35,7 @@ public class AuthenticationController {
     }
 
 
-    @GetMapping("/activate-account")
+    @PostMapping("/activate-account")
     public void confirm(
             @RequestParam String token
     ) throws MessagingException {

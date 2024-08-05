@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,19 +52,13 @@ public class AuthenticationService {
     public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
 
 
-        String roleName;
-        try {
-            roleName = request.getRoleName();
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid role name");
-        }
-
-        Role role = roleRepository.findByName(roleName)
+        Role role = roleRepository.findByName("USER")
                 .orElseGet(() -> {
                     Role newRole = new Role();
-                    newRole.setName(roleName);
+                    newRole.setName("USER");
                     return roleRepository.save(newRole);
                 });
+
         if (!isValidEmail(request.getEmail())) {
             throw new RuntimeException("Invalid email format");
         }
@@ -116,10 +113,10 @@ public class AuthenticationService {
     public void activateAccount(String token) throws MessagingException {
         Token savedToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
-        if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
-            sendValidationEmail(savedToken.getUser());
-            throw new RuntimeException("Activation token has expired. A new token has been send to the same email address");
-        }
+//        if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
+//            sendValidationEmail(savedToken.getUser());
+//            throw new RuntimeException("Activation token has expired. A new token has been sent to the same email address");
+//        }
 
         var user = repository.findById(savedToken.getUser().getId())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -185,9 +182,11 @@ public class AuthenticationService {
                 .token(jwtToken)
                 .refreshToken(refreshToken)
                 .tokenType(TokenType.BEARER)
+                .authorities(user.getAuthorities())
                 .build();
-
     }
+
+
 
 
     private boolean isValidEmail(String email) {
