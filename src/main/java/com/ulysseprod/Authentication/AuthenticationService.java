@@ -36,8 +36,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -191,9 +189,6 @@ public class AuthenticationService {
                 .build();
     }
 
-
-
-
     private boolean isValidEmail(String email) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
         Pattern pattern = Pattern.compile(emailRegex);
@@ -244,17 +239,4 @@ public class AuthenticationService {
         }
     }
 
-    public void changePassword(ChangePassRequest request, Principal connectedUser) {
-
-        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new IllegalStateException("Wrong password");
-        }
-        if (!request.getNewPassword().equals(request.getConfirmationPassword())) {
-            throw new IllegalStateException("Password are not the same");
-        }
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-
-        repository.save(user);
-    }
 }
