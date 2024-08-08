@@ -64,27 +64,44 @@ public class EmailService {
 
         mailSender.send(message);
     }
+    public void sendPasswordResetEmail(String to, String username, String token) throws MessagingException {
+        String subject = "Password Reset Request";
+        String resetUrl = "http://localhost:8082/Reset-Password?token=" + token;
 
-    public void sendPasswordResetEmail(String to, String token) throws MessagingException {
-        String subject = "Password Reset";
-        String body = "Dear User,Please click on the following link to reset your password:"
-                + "http://localhost:8082/Reset-Password?token=" + token + "Thank you.";
+        // Prepare the context for Thymeleaf template
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("username", username);
+        properties.put("resetUrl", resetUrl);
 
+        Context context = new Context();
+        context.setVariables(properties);
 
+        // Process the Thymeleaf template
+        String templateName = EmailTemplateName.RESET_PASSWORD.name();
+        String htmlBody = templateEngine.process(templateName, context);
 
-        sendEmailpass(to, subject, body);
+        // Create plain text fallback content
+        String textBody = "Dear " + username + ",\n\n"
+                + "We received a request to reset your password. Please click on the following link to create a new password:\n"
+                + resetUrl + "\n\n"
+                + "Thank you.";
+
+        sendEmailpass(to, subject, htmlBody, textBody);
     }
-    @Async
 
-    public void sendEmailpass(String to, String subject, String body) throws MessagingException {
+    @Async
+    public void sendEmailpass(String to, String subject, String htmlBody, String textBody) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message,
-                MULTIPART_MODE_MIXED,
-                UTF_8.name());
+        MimeMessageHelper helper = new MimeMessageHelper(message, MULTIPART_MODE_MIXED, UTF_8.name());
+
         helper.setFrom("contact.prod@ulysse.media");
         helper.setTo(to);
         helper.setSubject(subject);
-        helper.setText(body, true);
+
+        // Set both HTML and plain text parts
+        helper.setText(textBody, false); // Set plain text version
+        helper.setText(htmlBody, true);  // Set HTML version
+
         mailSender.send(message);
     }
 

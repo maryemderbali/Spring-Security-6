@@ -31,7 +31,8 @@ public class PassResetService {
         token.setExpiryDate(LocalDateTime.now().plusHours(2));
         passResetTokenRepo.save(token);
 
-        emailService.sendPasswordResetEmail(user.getEmail(), tokenValue);
+        // Call the method with username, email, and token
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), tokenValue);
     }
 
     public void resetPassword(String token, PassResetRequest passResetRequest) {
