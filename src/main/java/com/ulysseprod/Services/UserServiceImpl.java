@@ -3,6 +3,8 @@ package com.ulysseprod.Services;
 
 import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Entities.User;
+import com.ulysseprod.PasswordReset.PassResetTokenRepo;
+import com.ulysseprod.PasswordReset.PasswordResetToken;
 import com.ulysseprod.Repositories.RoleRepository;
 import com.ulysseprod.Repositories.UserRepository;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,8 @@ public class UserServiceImpl implements UserService{
     UserRepository userRepository;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+
+    private PassResetTokenRepo passwordTokenRepository;
     @Override
     public List<User> getAllUser() {
         return userRepository.findAll();
@@ -87,4 +91,7 @@ public class UserServiceImpl implements UserService{
             return "User with ID " + id + " not found.";
         }
     }
+
+
+
 }

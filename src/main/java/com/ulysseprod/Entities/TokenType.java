@@ -2,6 +2,7 @@ package com.ulysseprod.Entities;
 
 public enum TokenType {
     BEARER,
-    ACTIVATION
+    ACTIVATION,
+    RESET_PASSWORD
 
 }

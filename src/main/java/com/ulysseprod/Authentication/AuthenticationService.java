@@ -101,7 +101,7 @@ public class AuthenticationService {
 //                user.getEmail(),
 //                user.getUsername(),
 //                EmailTemplateName.ACTIVATE_ACCOUNT,
-//                "http://localhost:4200/activate-account",
+//                "",
 //                newToken,
 //                "Account activation"
 //        );
