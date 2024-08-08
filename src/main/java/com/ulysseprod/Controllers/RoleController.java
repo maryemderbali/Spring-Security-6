@@ -41,7 +41,7 @@ public class RoleController {
         roleService.assignPermissionToRole(roleName, permissionName);
     }
 
-    @PreAuthorize("hasAnyAuthority('DELETE_PERMISSION','DELETE_ROLE','EDIT_ROLE')")
+    @PreAuthorize("hasAnyAuthority('DELETE_PERMISSION','EDIT_ROLE')")
     @DeleteMapping("/RemovePermission/{roleName}/{permissionName}")
 
     public void removePermissionFromRole(@PathVariable("roleName") String roleName

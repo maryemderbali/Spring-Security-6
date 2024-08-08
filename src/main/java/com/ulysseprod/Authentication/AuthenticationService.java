@@ -1,8 +1,8 @@
 package com.ulysseprod.Authentication;
 
-//import com.ulysseprod.Email.EmailService;
-//import com.ulysseprod.Email.EmailTemplateName;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ulysseprod.Email.EmailService;
+import com.ulysseprod.Email.EmailTemplateName;
 import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Entities.Token;
 import com.ulysseprod.Entities.TokenType;
@@ -17,22 +17,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,8 +39,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-//    private final EmailService emailService;
-
+    private final EmailService emailService;
     public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
 
 
@@ -97,14 +89,14 @@ public class AuthenticationService {
     private void sendValidationEmail(User user) throws MessagingException {
         var newToken = generateAndSaveActivationToken(user);
 
-//        emailService.sendEmail(
-//                user.getEmail(),
-//                user.getUsername(),
-//                EmailTemplateName.ACTIVATE_ACCOUNT,
-//                "",
-//                newToken,
-//                "Account activation"
-//        );
+        emailService.sendEmail(
+                user.getEmail(),
+                user.getUsername(),
+                EmailTemplateName.ACTIVATE_ACCOUNT,
+                "",
+                newToken,
+                "Account activation"
+        );
     }
 
 
