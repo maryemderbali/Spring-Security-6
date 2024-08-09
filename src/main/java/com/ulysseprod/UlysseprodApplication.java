@@ -67,14 +67,14 @@ public class UlysseprodApplication {
         if(u == null){
             List<Permission> allPermissions = permissionRepository.findAll();
             Role newRole = new Role();
-            newRole.setName("SUPER_ADMIN");
+            newRole.setName("SUPER_USER");
             newRole.setPermissions(allPermissions);
             roleRepository.save(newRole);
 
             var superuser = User.builder()
                     .email("super@app.com")
                     .username("super")
-                    .password(passwordEncoder.encode("12345678super"))
+                    .password("$2a$10$E8j3nCUFbEUbzuLa7brVbe60zFsfYAudl7CZow4pG6Xa7f7qZ1r.G")
                     .blocked(false)
                     .enabled(true)
                     .roles(List.of(newRole))

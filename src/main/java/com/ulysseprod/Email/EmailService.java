@@ -44,8 +44,8 @@ public class EmailService {
         MimeMessageHelper helper = new MimeMessageHelper(
                 message,
                 MULTIPART_MODE_MIXED,
-                UTF_8.name()
-        );
+                UTF_8.name() );
+
         Map<String, Object> properties = new HashMap<>();
         properties.put("username", username);
         properties.put("confirmationUrl", confirmationUrl);
@@ -68,7 +68,6 @@ public class EmailService {
         String subject = "Password Reset Request";
         String resetUrl = "http://localhost:8082/Reset-Password?token=" + token;
 
-        // Prepare the context for Thymeleaf template
         Map<String, Object> properties = new HashMap<>();
         properties.put("username", username);
         properties.put("resetUrl", resetUrl);
@@ -76,11 +75,9 @@ public class EmailService {
         Context context = new Context();
         context.setVariables(properties);
 
-        // Process the Thymeleaf template
         String templateName = EmailTemplateName.RESET_PASSWORD.name();
         String htmlBody = templateEngine.process(templateName, context);
 
-        // Create plain text fallback content
         String textBody = "Dear " + username + ",\n\n"
                 + "We received a request to reset your password. Please click on the following link to create a new password:\n"
                 + resetUrl + "\n\n"
@@ -98,9 +95,8 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(subject);
 
-        // Set both HTML and plain text parts
-        helper.setText(textBody, false); // Set plain text version
-        helper.setText(htmlBody, true);  // Set HTML version
+        helper.setText(textBody, false);
+        helper.setText(htmlBody, true);
 
         mailSender.send(message);
     }

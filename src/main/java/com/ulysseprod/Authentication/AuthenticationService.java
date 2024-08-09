@@ -15,6 +15,8 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -40,47 +42,55 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
-    public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
+    private final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
 
-        Role role = roleRepository.findByName("USER")
-                .orElseGet(() -> {
-                    Role newRole = new Role();
-                    newRole.setName("USER");
-                    return roleRepository.save(newRole);
-                });
-
-        if (!isValidEmail(request.getEmail())) {
-            throw new RuntimeException("Invalid email format");
-        }
-
-        if (repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-
-        if (repository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists");
-        }
-
-        var user = User.builder()
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .blocked(false)
-                .enabled(false)
-                .roles(List.of(role))
-                .build();
+        public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
 
 
-        repository.save(user);
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
-        saveUserToken(user, jwtToken);
-        sendValidationEmail(user);
+            Role role = roleRepository.findByName("USER")
+                    .orElseGet(() -> {
+                        Role newRole = new Role();
+                        newRole.setName("USER");
+                        return roleRepository.save(newRole);
+                    });
+
+            if (!isValidEmail(request.getEmail())) {
+                logger.warn("Invalid email format: {}", request.getEmail());
+                throw new RuntimeException("Invalid email format");
+            }
+
+            if (repository.findByEmail(request.getEmail()).isPresent()) {
+                logger.warn("Email already exists: {}", request.getEmail());
+                throw new RuntimeException("Email already exists");
+            }
+
+            if (repository.findByUsername(request.getUsername()).isPresent()) {
+                logger.warn("Username already exists: {}", request.getUsername());
+                throw new RuntimeException("Username already exists");
+            }
+
+            var user = User.builder()
+                    .email(request.getEmail())
+                    .username(request.getUsername())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .blocked(false)
+                    .enabled(false)
+                    .roles(List.of(role))
+                    .build();
 
 
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
+            repository.save(user);
+            var jwtToken = jwtService.generateToken(user);
+            var refreshToken = jwtService.generateRefreshToken(user);
+            saveUserToken(user, jwtToken);
+            sendValidationEmail(user);
+
+            logger.info("User registered successfully: {}", user.getUsername());
+
+
+            return AuthenticationResponse.builder()
+                    .token(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .refreshToken(refreshToken)
                 .build();
@@ -213,7 +223,10 @@ public class AuthenticationService {
         username = jwtService.extractusername(refreshToken);
         if (username != null) {
             var user = this.repository.findByUsername(username)
-                    .orElseThrow();
+                    .orElseThrow(() -> {
+                        logger.error("User not found with username: {}", username);
+                        return new UsernameNotFoundException("User not found");
+                    });
             if (jwtService.isTokenValid(refreshToken, user)) {
                 var accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
@@ -222,6 +235,7 @@ public class AuthenticationService {
                         .token(accessToken)
                         .refreshToken(refreshToken)
                         .build();
+                logger.info("Token refreshed for user: {}", username);
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
         }

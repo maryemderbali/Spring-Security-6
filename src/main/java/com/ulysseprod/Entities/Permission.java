@@ -1,5 +1,6 @@
 package com.ulysseprod.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,8 @@ public class Permission {
 
     private Integer id;
     private String name;
+
+    @JsonIgnore
     @ManyToMany(mappedBy = "permissions")
     private List<Role> roles;
 

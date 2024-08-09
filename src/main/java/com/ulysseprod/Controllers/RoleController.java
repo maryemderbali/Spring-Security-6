@@ -1,8 +1,11 @@
 package com.ulysseprod.Controllers;
 
+import com.ulysseprod.Entities.Permission;
 import com.ulysseprod.Entities.Role;
 import com.ulysseprod.Services.RoleServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +30,8 @@ public class RoleController {
         roleService.deleteRole(roleName);
     }
 
+
+    @PreAuthorize("hasAuthority('READ_ROLE')")
     @GetMapping("/all")
     public List<Role> getAllRoles() {
         return roleService.getAllRoles();
@@ -48,5 +53,16 @@ public class RoleController {
             , @PathVariable("permissionName") String permissionName)
     {
         roleService.removePermissionFromRole(roleName, permissionName);
+    }
+
+    @PreAuthorize("hasAuthority('READ_ROLE')")
+    @GetMapping("/permissions/{roleName}")
+    public ResponseEntity<List<Permission>> getPermissionsByRoleName(@PathVariable("roleName") String roleName) {
+        try {
+            List<Permission> permissions = roleService.getPermissionsByRoleName(roleName);
+            return ResponseEntity.ok(permissions);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 }

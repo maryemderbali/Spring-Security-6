@@ -1,11 +1,7 @@
 package com.ulysseprod.Controllers;
 
-import com.ulysseprod.Email.EmailService;
 import com.ulysseprod.Entities.User;
-import com.ulysseprod.PasswordReset.PassResetService;
-import com.ulysseprod.Repositories.UserRepository;
 import com.ulysseprod.Services.UserServiceImpl;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
@@ -21,9 +16,6 @@ public class UserController {
     @Autowired
     UserServiceImpl userService;
 
-    UserRepository repository;
-    EmailService emailService;
-    PassResetService passResetTokenService;
 
     @PreAuthorize("hasAuthority('READ_USER')")
     @GetMapping
@@ -73,5 +65,15 @@ public class UserController {
         return ResponseEntity.ok(result);
     }
 
+    @PreAuthorize("hasAuthority('READ_USER')")
+    @GetMapping("/by-role")
+    public ResponseEntity<List<User>> getUsersByRole(@RequestParam String roleName) {
+        try {
+            List<User> users = userService.getUsersByRole(roleName);
+            return ResponseEntity.ok(users);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 
 }

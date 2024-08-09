@@ -10,6 +10,7 @@ import com.ulysseprod.Repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,13 +51,15 @@ public class UserServiceImpl implements UserService{
         return null;
     }
 
-    @Override
+    @Transactional
     public  void deleteUser(Integer id) {
         Optional<User> userOptional = userRepository.findById(id);
         if (userOptional.isEmpty()) {
             throw new RuntimeException("User not found");
         }
-        userRepository.delete(userOptional.get());
+        User user = userOptional.get();
+        passwordTokenRepository.deletePasswordResetTokenByUserId(id);
+        userRepository.delete(user);
     }
 
 
@@ -93,5 +96,10 @@ public class UserServiceImpl implements UserService{
     }
 
 
+    public List<User> getUsersByRole(String roleName) {
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+        return userRepository.findByRolesContaining(role);
+    }
 
 }

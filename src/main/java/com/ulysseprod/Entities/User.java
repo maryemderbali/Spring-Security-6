@@ -1,5 +1,6 @@
 package com.ulysseprod.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,10 +27,13 @@ public class User implements UserDetails {
     private boolean blocked;
     private boolean enabled;
 
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
     private List<Role> roles ;
 
-    @OneToMany(mappedBy = "user")
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user" ,cascade = CascadeType.ALL)
     private List<Token> tokens;
 
 
