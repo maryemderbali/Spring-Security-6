@@ -32,6 +32,12 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public User getUserById(Integer id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+
+    @Override
     public void createUser(User user, String roleName) {
         Optional<Role> role = roleRepository.findByName(roleName);
 

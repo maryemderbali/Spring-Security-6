@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -168,7 +169,7 @@ public class AuthenticationService {
                         request.getUsername(),
                         request.getPassword())
         );
-        var user = repository.findByUsername(request.getUsername())
+        User user = repository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: "
                         + request.getUsername()));
 

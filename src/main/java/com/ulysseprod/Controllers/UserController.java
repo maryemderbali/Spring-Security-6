@@ -75,5 +75,9 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
-
+    @PreAuthorize("hasAuthority('READ_USER')")
+    @GetMapping("/getbyid/{id}")
+    public User getUserById(@PathVariable("id") Integer id) {
+        return userService.getUserById(id);
+    }
 }

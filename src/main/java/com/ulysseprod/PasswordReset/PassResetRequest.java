@@ -13,5 +13,4 @@ public class PassResetRequest {
     private String newPassword;
     private String confirmPassword;
 
-
 }

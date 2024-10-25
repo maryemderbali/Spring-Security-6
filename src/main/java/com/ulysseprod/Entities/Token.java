@@ -19,10 +19,6 @@ public class Token {
 
     @Column(unique = true)
     private String token;
-
-
-
-
     private LocalDateTime createdAt;
     public LocalDateTime expiresAt;
     public boolean revoked;

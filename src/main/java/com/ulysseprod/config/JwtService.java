@@ -3,6 +3,7 @@ package com.ulysseprod.config;
 import com.ulysseprod.Entities.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +14,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
 
 
 @Service
@@ -34,6 +38,7 @@ public class JwtService {
     private Key getSigningKey() {
 
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        System.out.println(Encoders.BASE64.encode(Keys.hmacShaKeyFor(keyBytes).getEncoded()));
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -48,18 +53,21 @@ public class JwtService {
 
     public String generateToken(Map<String, Object> extraClaims,
                                 UserDetails userDetails){
+        extraClaims.put("name : ", userDetails.getUsername());
+
+        extraClaims.put("authorities :", userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+1000 * 60 * 24))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith( SignatureAlgorithm.HS256,SECRET_KEY)
                 .compact();
 
     }
-
-
     public boolean isTokenValid(String token, UserDetails userDetails)
     {
         final String username = extractusername(token);
@@ -72,6 +80,7 @@ public class JwtService {
     }
 
     private Date extractExpiration(String token) {
+
         return extractClaim(token, Claims::getExpiration);
     }
 
